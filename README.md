@@ -1,0 +1,2 @@
+# Quarto Template for Powerpoint Presentation
+ Welcome to our Presentation Template Repository! This repository hosts a customizable presentation template designed to streamline the creation of presentations in powerpoint. Our template is pre-configured with the APA citation style and includes examples of references, tables, interactive graphs, and more.  To get started with the template, simply open the `Template_powerpoint.qmd` file. You can either clone the repo or just copy the folder from P:\BMS\htsr\General
