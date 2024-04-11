@@ -1,0 +1,281 @@
+---
+# this the yaml header
+title: "An interesting title and a an unneccessary long one to see what happens"
+subtitle: "A subtitle and a an unneccessary long one to see what happens"
+format:
+  pptx:
+    reference-doc: background.pptx  # This is the template we used
+    toc: true # This will create a table of contents
+    toc-depth: 1 # This will only show the first level of the table of contents (levels can go to 3)
+    toc-title: "Table of Contents"
+bibliography: references.bib
+csl: "apa.csl" # your APA CSL file here, see instructions below in references section
+---
+
+```{r packages and settings}
+
+# Please install packages if not installed yet
+
+library(tidyverse) # for the data manipulation and plotting
+library(gapminder) # for the data
+library(gganimate) # for the animation
+library(ggrepel) # for the text labels
+library(magick) # to read gifs
+library(gt) # for the tables
+library(gtExtras) # for the sparklines
+library(webshot2) # to convert the gt table to a png
+
+options(scipen = 999) # to avoid scientific notation
+
+
+```
+
+# Introduction
+
+## Welcome to the Presentation Template
+
+This template is designed to help you create presentations with quarto. Inside, you'll find examples of:
+
+-   **References**: How to cite sources and include a bibliography.
+-   **Tables**: Styling and presenting data in tables.
+-   **Interactive Graphs**: Incorporating dynamic, interactive graphs to visualize data.
+
+## Folder structure
+
+To run the code, you need to have the following folder structure.
+
+![](images/folder-01.png){fig-align="center"}
+
+## Getting Started
+
+To use of this template, please:
+
+1.  **Copy the Template**: Ensure you copy the entire template folder to the location where you intend to work.
+2.  **Clone the Repo**: Alternatively, you can clone the repository from my [GitHub account](https://github.com/misjamikkersutwente/Quarto-Template-for-Powerpoint-Presentation/blob/main/README.md) to keep up with updates.
+
+# Instructions and errors
+
+## Instructions on yaml and template
+
+Background.pptx is a template that is used to render the presentation.
+
+-   the title and subtitle are set in the yaml
+-   the date is set in the template (background.pptx), to the date on which the presentation is rendered. If you want to change this, you need to change the date in the template
+-   the name and email adress cannot be set in the yaml (because ), but can changed hard in the template.
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+
+More specifically, information about changing the template and the yaml can be found at <https://quarto.org/docs/presentations/powerpoint.html>.
+
+## Resolving Pandoc Permission Denied Error
+
+If you encounter a `pandoc: Yourfile.pptx: withBinaryFile: permission denied (Permission denied)` error, this likely due to **File Locking**: The file is open in Powerpoint, which is preventing access (to overwrite). To resolve this, close the file in Powerpoint and try to render again.
+
+# Examples of specific template sheets (with graphs, tables and code)
+
+## Slide with speaker notes
+
+You can also add speaker notes to your slides.
+
+::: notes
+This is a speaker note.
+
+-   Use basic Markdown
+-   like this list
+-   *and inline formatting*
+:::
+
+## Bullets
+
+When you click the **Render** button a document will be generated that includes:
+
+-   Content authored with markdown
+-   Output from executable code
+
+## Slide with citations
+
+And I really like @agrell2013smart
+
+The references are stored in the references.bib file. The reference list is at the end of the presentation.
+
+## Code
+
+You can have some text and then the output of some code. Here we make a standard graph
+
+```{r a simple plot}
+
+ggplot(data = cars, mapping = aes(x = speed, y = dist)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw()
+
+```
+
+## Show some code
+
+The code itself cannot have a different background color in powerpoint (html and pdf would allow that).
+
+```{r show code, echo = TRUE, eval = FALSE}
+
+
+ggplot(data = cars, mapping = aes(x = speed, y = dist)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw()
+
+
+```
+
+## A nice table
+
+```{r a nice table}
+
+# For nice tables I like to use the gt package. However, the gt package does not render to a powerpoint presentation. Therefore, I save the table as a png and then display it in the presentation.
+
+# Create a table with the GDP per capita for 1952, 1972, 1992 and 2007
+
+df <- gapminder %>%
+  group_by(continent, year) %>%
+  summarise(GdpPerCap = weighted.mean(x = gdpPercap, 
+                                      w = pop, 
+                                      na.rm = FALSE),
+                                      .groups = "drop") %>%
+  filter(year %in% c(1952, 1972, 1992, 2007)) %>%
+  pivot_wider(
+    id_cols = continent,
+    names_from = year,
+    values_from = GdpPerCap) %>%
+   group_by(continent) %>%
+   mutate(
+    `1952_rel` = `1952` / `1952`,
+    `1972_rel` = `1972` / `1952`,
+    `1992_rel` = `1992` / `1952`,
+    `2007_rel` = `2007` / `1952`
+  ) %>%
+  mutate(`Relative trend` = list(c(`1952_rel`, `1972_rel`, `1972_rel`, `1972_rel`))) %>%
+  ungroup() %>%
+  select(-`1952_rel`, -`1972_rel`, -`1992_rel`, -`2007_rel`)
+
+
+Table <- df %>%
+  gt() %>%
+  tab_style(
+    style = cell_borders(color = "transparent"),
+    locations = cells_body()
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels()
+  ) %>%  # Format the numbers as currency and decimals as 0
+  fmt_currency(
+    columns = everything(),
+    decimals = 0
+  ) %>%  # Highlight the European countries
+  tab_style(
+    style = cell_text(color = "#0094B3", weight = "bold"),
+    locations = cells_body(
+      columns = everything(),
+      rows = continent == "Europe"
+    )
+  ) %>%  # this will create a trendline
+  cols_align(
+    align = "left",
+    columns = c(continent)
+  ) %>%
+  gt_plt_sparkline(
+    column = `Relative trend`,
+    label = FALSE,
+    palette = c("#0094B3", "transparent", "transparent", "transparent", "transparent")
+  )
+
+# # Save the gt table as HTML temporarily
+ gtsave(Table, "../Figures/temp_table.html")
+#
+# # Use webshot2 to convert the HTML to PNG
+webshot("../Figures/temp_table.html", "../Figures/Table.png", vwidth = 800, vheight = 600)
+#
+Table <- image_read("../Figures/Table.png")
+
+# You can now use the`png` to display it in R
+
+#plot(Table)
+
+```
+
+## And an interactive graph
+
+```{r interactive graph}
+
+
+fullrun <- 0  # set to 1 to run the full code and save the gif, 0 to only show the gif (if the gif exists)
+
+# Please note that the code only works if you create a folder Figures first
+
+if(fullrun){
+
+Countries_plot <- c("Netherlands", "Iran", "United States",  "South Africa", "Australia")
+
+
+df <- gapminder %>%
+  mutate(Label = ifelse(country %in% Countries_plot, as.character(country), ""))
+
+
+
+ p <- ggplot(data = df,
+             aes(x = log10(gdpPercap),
+                 y = lifeExp,
+                 size = pop,
+                 colour = country,
+                 label = Label)) +
+  geom_point(alpha = 0.7,
+             show.legend = FALSE) +
+  scale_colour_manual(values = country_colors) +
+  geom_text_repel(color = "black",
+                  size = 4,
+                  box.padding = 0.5,
+                  max.overlaps = Inf) +
+  theme_bw() +
+  labs(title = 'Year: {frame_time}',
+       x = 'The log of the GDP per capita',
+       y = 'Life expectancy',
+       caption = "Size of points represent size of the population\nSource: Gapminder") +
+  transition_time(year)
+
+ p
+
+ anim_save("../Figures/gapminder.gif", animation = last_animation())
+ 
+} else {
+ 
+p <- image_read("../Figures/gapminder.gif")
+
+}
+
+p
+
+
+```
+
+# Here we have an empty section header
+
+# References
+
+## Customizing reference style in your presentation
+
+This template uses the APA style for formatting references. If the APA style does not meet your requirements you can customize it by following these steps:
+
+1.  **Find and download a new CSL file**:
+
+    -   Visit the [Zotero Style Repository](https://www.zotero.org/styles).
+    -   Use the search bar to find the citation style that matches your needs.
+    -   Download the `.csl` file for your chosen citation style and save the downloaded `.csl` file into the `Code` folder
+
+2.  **Update the YAML header**:
+
+    -   Update the `csl` field in the YAML header to point to your new `.csl` file.
+
+## Litarature
+
+\`\`\`{bibliography}
