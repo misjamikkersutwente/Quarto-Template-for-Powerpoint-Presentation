@@ -61,7 +61,7 @@ Background.pptx is a template that is used to render the presentation.
 
 -   the title and subtitle are set in the yaml
 -   the date is set in the template (background.pptx), to the date on which the presentation is rendered. If you want to change this, you need to change the date in the template
--   the name and email adress cannot be set in the yaml (because ), but can changed hard in the template.
+-   the name and email adress cannot be set in the yaml (because powerpoint does not seem to have placeholders that communicate these fields with quarto), but can changed hard in the template.
 
 ## Quarto
 
