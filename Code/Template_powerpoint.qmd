@@ -245,7 +245,8 @@ df <- gapminder %>%
 
  p
 
- anim_save("../Figures/gapminder.gif", animation = last_animation())
+ animate(p, nframes = 500, fps = 25, end_pause = 2, 
+         renderer=gifski_renderer("../Figures/gapminder.gif"))
  
 } else {
  
@@ -254,6 +255,10 @@ p <- image_read("../Figures/gapminder.gif")
 }
 
 p
+
+
+
+
 
 
 ```
